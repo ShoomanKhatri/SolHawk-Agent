@@ -6,7 +6,7 @@ import { db } from "@/src/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { Invoice } from "@/src/types/invoice";
 import { QRCodeSVG } from "qrcode.react";
-import { ArrowLeft, CheckCircle, RefreshCw, Send, ExternalLink, Copy } from "lucide-react";
+import { ArrowLeft, CheckCircle, RefreshCw, Send, ExternalLink, Copy, Wallet, Calendar, AlertCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 export default function InvoiceDetail() {
@@ -85,111 +85,165 @@ export default function InvoiceDetail() {
     setProcessing(false);
   };
 
-  if (loading) return <div className="text-center p-20">Loading...</div>;
-  if (!invoice) return <div className="text-center p-20">Invoice not found.</div>;
+  if (loading) return (
+    <div className="flex flex-col items-center justify-center min-h-screen space-y-4 bg-black">
+      <RefreshCw size={40} className="text-solana-purple animate-spin" />
+      <p className="text-gray-500">Loading invoice...</p>
+    </div>
+  );
+  
+  if (!invoice) return (
+    <div className="flex flex-col items-center justify-center min-h-screen space-y-6 bg-black p-6 text-center">
+      <AlertCircle size={60} className="text-red-500/50" />
+      <div>
+        <h2 className="text-2xl font-bold text-white mb-2">Invoice Not Found</h2>
+        <p className="text-gray-400">This invoice may have been deleted or the link is invalid.</p>
+      </div>
+      <Link href="/dashboard" className="btn-primary">Return to Dashboard</Link>
+    </div>
+  );
 
   return (
-    <div className="min-h-screen p-8 max-w-4xl mx-auto">
-      <Link href="/dashboard" className="flex items-center gap-2 text-gray-400 hover:text-white mb-8">
-        <ArrowLeft size={20} />
-        Back to Dashboard
-      </Link>
+    <div className="relative min-h-screen">
+      <div className="bg-glow" />
+      
+      <div className="relative z-10 max-w-6xl mx-auto px-6 py-12">
+        <Link href="/dashboard" className="inline-flex items-center gap-2 text-gray-500 hover:text-white transition-colors mb-12 group">
+          <ArrowLeft size={20} className="transition-transform group-hover:-translate-x-1" />
+          <span className="font-medium">Back to Dashboard</span>
+        </Link>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-        {/* Invoice Info */}
-        <div className="md:col-span-2 space-y-6">
-          <div className="solana-card">
-            <div className="flex justify-between items-start mb-6">
-              <div>
-                <h1 className="text-3xl font-bold text-white mb-1">{invoice.clientName}</h1>
-                <p className="text-gray-400 font-mono text-xs">{invoice.clientWallet}</p>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-10">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            <div className="solana-card p-10">
+              <div className="flex flex-col md:flex-row justify-between items-start gap-6 mb-12">
+                <div>
+                  <h1 className="text-4xl font-black text-white mb-2">{invoice.clientName}</h1>
+                  <div className="flex items-center gap-2 text-gray-500 bg-white/5 px-3 py-1.5 rounded-lg w-fit">
+                    <Wallet size={14} />
+                    <span className="font-mono text-xs">{invoice.clientWallet}</span>
+                  </div>
+                </div>
+                <span className={`badge px-4 py-2 text-sm ${
+                  invoice.status === 'paid' 
+                  ? 'text-solana-green bg-solana-green/10 border border-solana-green/20' 
+                  : 'text-solana-purple bg-solana-purple/10 border border-solana-purple/20'
+                }`}>
+                  {invoice.status}
+                </span>
               </div>
-              <span className={`px-3 py-1 rounded-full text-xs font-bold uppercase ${
-                invoice.status === 'paid' ? 'text-solana-green bg-solana-green/10' : 'text-solana-purple bg-solana-purple/10'
-              }`}>
-                {invoice.status}
-              </span>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-10 mb-12">
+                <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Amount Due</p>
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-4xl font-black text-solana-green">{invoice.amount}</span>
+                    <span className="text-xl font-bold text-solana-green/70">SOL</span>
+                  </div>
+                </div>
+                <div className="bg-white/5 p-6 rounded-2xl border border-white/5">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">Due Date</p>
+                  <div className="flex items-center gap-3">
+                    <Calendar className="text-solana-purple" size={24} />
+                    <span className="text-2xl font-bold text-gray-200">
+                      {new Date(invoice.dueDate).toLocaleDateString(undefined, { month: 'long', day: 'numeric', year: 'numeric' })}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {invoice.note && (
+                <div className="mb-12">
+                  <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-3">Invoice Memo</p>
+                  <div className="bg-white/5 p-6 rounded-2xl border border-white/5 text-gray-300 leading-relaxed">
+                    {invoice.note}
+                  </div>
+                </div>
+              )}
+
+              <div className="flex flex-wrap gap-4 pt-8 border-t border-white/5">
+                <button onClick={checkPayment} disabled={processing} className="btn-primary px-8">
+                  <RefreshCw size={18} className={processing ? "animate-spin" : ""} />
+                  Check Transaction
+                </button>
+                <button onClick={generateReminder} disabled={processing} className="btn-secondary px-8">
+                  <Send size={18} />
+                  AI Reminder
+                </button>
+                {invoice.status !== 'paid' && (
+                  <button onClick={markPaidManually} disabled={processing} className="btn-ghost">
+                    Mark Paid Manually
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-8 mb-8">
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Amount Due</p>
-                <p className="text-2xl font-bold text-solana-green">{invoice.amount} SOL</p>
-              </div>
-              <div>
-                <p className="text-sm text-gray-400 mb-1">Due Date</p>
-                <p className="text-xl">{new Date(invoice.dueDate).toLocaleDateString()}</p>
-              </div>
-            </div>
-
-            {invoice.note && (
-              <div className="mb-8">
-                <p className="text-sm text-gray-400 mb-1">Note</p>
-                <p className="text-gray-200 bg-white/5 p-4 rounded-lg">{invoice.note}</p>
+            {/* AI Reminder Display */}
+            {invoice.aiReminder && (
+              <div className="solana-card border-solana-purple/20 bg-solana-purple/5 p-8 relative overflow-hidden group">
+                <div className="absolute top-0 right-0 p-8 opacity-5 transition-opacity group-hover:opacity-10 pointer-events-none">
+                  <Send size={120} className="text-solana-purple" />
+                </div>
+                
+                <h3 className="text-xl font-bold text-solana-purple mb-6 flex items-center gap-3">
+                  <div className="bg-solana-purple/20 p-2 rounded-lg">
+                    <Sparkles size={20} />
+                  </div>
+                  Generated AI Reminder
+                </h3>
+                
+                <div className="bg-black/40 p-6 rounded-xl border border-white/5 text-gray-300 italic leading-relaxed whitespace-pre-wrap mb-6">
+                  {invoice.aiReminder}
+                </div>
+                
+                <button 
+                  onClick={() => {
+                    navigator.clipboard.writeText(invoice.aiReminder!);
+                    alert("Copied to clipboard!");
+                  }}
+                  className="flex items-center gap-2 text-sm font-bold text-solana-purple hover:text-solana-green transition-colors"
+                >
+                  <Copy size={16} />
+                  Copy to Clipboard
+                </button>
               </div>
             )}
-
-            <div className="flex flex-wrap gap-4">
-              <button onClick={checkPayment} disabled={processing} className="btn-primary flex items-center gap-2">
-                <RefreshCw size={18} className={processing ? "animate-spin" : ""} />
-                Check Payment
-              </button>
-              <button onClick={generateReminder} disabled={processing} className="btn-secondary flex items-center gap-2">
-                <Send size={18} />
-                Generate Reminder
-              </button>
-              {invoice.status !== 'paid' && (
-                <button onClick={markPaidManually} disabled={processing} className="px-4 py-2 text-gray-400 hover:text-white transition-colors text-sm">
-                  Mark Paid Manually
-                </button>
-              )}
-            </div>
           </div>
 
-          {/* AI Reminder Section */}
-          {invoice.aiReminder && (
-            <div className="solana-card border-solana-purple/30 bg-solana-purple/5">
-              <h3 className="text-lg font-semibold text-solana-purple mb-3 flex items-center gap-2">
-                <Send size={18} />
-                AI Payment Reminder
-              </h3>
-              <p className="text-gray-300 italic whitespace-pre-wrap">{invoice.aiReminder}</p>
-              <button 
-                onClick={() => {
-                  navigator.clipboard.writeText(invoice.aiReminder!);
-                  alert("Copied to clipboard!");
-                }}
-                className="mt-4 flex items-center gap-2 text-sm text-solana-purple hover:underline"
+          {/* Sidebar / QR Code */}
+          <div className="space-y-8">
+            <div className="solana-card p-8 flex flex-col items-center">
+              <div className="bg-solana-green/10 text-solana-green px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-widest mb-8 border border-solana-green/20">
+                Solana Pay
+              </div>
+              
+              <div className="bg-white p-5 rounded-3xl mb-8 shadow-[0_0_50px_rgba(20,241,149,0.1)]">
+                <QRCodeSVG value={invoice.solanaPayLink} size={220} level="H" />
+              </div>
+              
+              <p className="text-sm text-center text-gray-500 mb-8 px-4 leading-relaxed">
+                Scan with Phantom or Solflare to pay this invoice instantly on the Solana network.
+              </p>
+              
+              <a 
+                href={invoice.solanaPayLink} 
+                className="w-full btn-ghost border-solana-green/30 text-solana-green hover:bg-solana-green/5 flex items-center justify-center gap-2 py-4"
               >
-                <Copy size={14} />
-                Copy to Clipboard
-              </button>
+                <ExternalLink size={18} />
+                Open Wallet App
+              </a>
             </div>
-          )}
-        </div>
 
-        {/* Payment QR Code */}
-        <div className="space-y-6">
-          <div className="solana-card flex flex-col items-center">
-            <h3 className="text-lg font-semibold mb-4">Solana Pay</h3>
-            <div className="bg-white p-4 rounded-xl mb-4">
-              <QRCodeSVG value={invoice.solanaPayLink} size={200} />
+            <div className="solana-card p-6">
+              <p className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Payout Wallet</p>
+              <div className="bg-black/40 p-4 rounded-xl border border-white/5">
+                <p className="font-mono text-[10px] break-all text-gray-400 mb-2">RECEIVER ADDRESS</p>
+                <p className="font-mono text-xs text-solana-green break-all leading-relaxed">
+                  {invoice.receiverWallet}
+                </p>
+              </div>
             </div>
-            <p className="text-xs text-center text-gray-500 mb-6 px-4">
-              Scan this QR code with a Solana wallet (Phantom, Solflare) to pay instantly.
-            </p>
-            <a 
-              href={invoice.solanaPayLink} 
-              className="w-full btn-primary !bg-white/10 !text-white hover:!bg-white/20 flex items-center justify-center gap-2 py-3"
-            >
-              <ExternalLink size={18} />
-              Open in Wallet
-            </a>
-          </div>
-
-          <div className="solana-card text-xs text-gray-500 space-y-2">
-            <p className="font-semibold text-gray-400 uppercase tracking-wider">Receiver Address</p>
-            <p className="font-mono break-all bg-black/30 p-2 rounded">{invoice.receiverWallet}</p>
           </div>
         </div>
       </div>

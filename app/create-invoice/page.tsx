@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { db } from "@/src/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { generateSolanaPayLink } from "@/src/lib/solana";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Sparkles, Wallet, Calendar, FileText, RefreshCw } from "lucide-react";
 import Link from "next/link";
 
 export default function CreateInvoice() {
@@ -52,95 +52,127 @@ export default function CreateInvoice() {
   };
 
   return (
-    <div className="min-h-screen p-8 max-w-2xl mx-auto">
-      <Link href="/dashboard" className="flex items-center gap-2 text-gray-400 hover:text-white mb-8">
-        <ArrowLeft size={20} />
-        Back to Dashboard
-      </Link>
+    <div className="relative min-h-screen">
+      <div className="bg-glow" />
+      
+      <div className="relative z-10 max-w-3xl mx-auto px-6 py-12">
+        <Link href="/dashboard" className="inline-flex items-center gap-2 text-gray-500 hover:text-white transition-colors mb-12 group">
+          <ArrowLeft size={20} className="transition-transform group-hover:-translate-x-1" />
+          <span className="font-medium">Back to Dashboard</span>
+        </Link>
 
-      <div className="solana-card">
-        <h1 className="text-3xl font-bold mb-6 solana-gradient-text">Create Invoice</h1>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Client Name</label>
-            <input
-              type="text"
-              required
-              className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-solana-purple outline-none"
-              placeholder="Enter client name"
-              value={formData.clientName}
-              onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Client Wallet Address</label>
-            <input
-              type="text"
-              required
-              className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-solana-purple outline-none"
-              placeholder="Client's Solana wallet address"
-              value={formData.clientWallet}
-              onChange={(e) => setFormData({ ...formData, clientWallet: e.target.value })}
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Receiver Wallet Address (Yours)</label>
-            <input
-              type="text"
-              required
-              className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-solana-purple outline-none"
-              placeholder="Your Solana wallet address"
-              value={formData.receiverWallet}
-              onChange={(e) => setFormData({ ...formData, receiverWallet: e.target.value })}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Amount (SOL)</label>
-              <input
-                type="number"
-                step="0.000000001"
-                required
-                className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-solana-purple outline-none"
-                placeholder="0.0"
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              />
+        <div className="solana-card p-10">
+          <div className="flex items-center gap-3 mb-10">
+            <div className="bg-solana-purple/20 p-3 rounded-2xl">
+              <Sparkles className="text-solana-purple" size={28} />
             </div>
             <div>
-              <label className="block text-sm text-gray-400 mb-1">Due Date</label>
-              <input
-                type="date"
-                required
-                className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-solana-purple outline-none"
-                value={formData.dueDate}
-                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-              />
+              <h1 className="text-3xl font-bold text-white">Create New Invoice</h1>
+              <p className="text-gray-400 mt-1">Fill in the details to generate a Solana Pay link.</p>
             </div>
           </div>
+          
+          <form onSubmit={handleSubmit} className="space-y-8">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">Client Name</label>
+                <div className="relative">
+                  <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
+                  <input
+                    type="text"
+                    required
+                    className="solana-input pl-12"
+                    placeholder="e.g. John Doe"
+                    value={formData.clientName}
+                    onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                  />
+                </div>
+              </div>
 
-          <div>
-            <label className="block text-sm text-gray-400 mb-1">Note</label>
-            <textarea
-              className="w-full bg-black/50 border border-white/10 rounded-lg p-3 text-white focus:border-solana-purple outline-none h-24"
-              placeholder="Invoice details or memo"
-              value={formData.note}
-              onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-            />
-          </div>
+              <div className="space-y-2">
+                <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">Amount (SOL)</label>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-solana-green font-bold">◎</span>
+                  <input
+                    type="number"
+                    step="0.000000001"
+                    required
+                    className="solana-input pl-10"
+                    placeholder="0.00"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  />
+                </div>
+              </div>
+            </div>
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full btn-secondary mt-4 py-4 disabled:opacity-50"
-          >
-            {loading ? "Creating..." : "Create Invoice"}
-          </button>
-        </form>
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">Client Wallet Address</label>
+              <div className="relative">
+                <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
+                <input
+                  type="text"
+                  required
+                  className="solana-input pl-12 font-mono text-sm"
+                  placeholder="Solana wallet address"
+                  value={formData.clientWallet}
+                  onChange={(e) => setFormData({ ...formData, clientWallet: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">Receiver Wallet (Your Address)</label>
+              <div className="relative">
+                <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 text-solana-purple/50" size={18} />
+                <input
+                  type="text"
+                  required
+                  className="solana-input pl-12 font-mono text-sm border-solana-purple/20"
+                  placeholder="Your Solana wallet address"
+                  value={formData.receiverWallet}
+                  onChange={(e) => setFormData({ ...formData, receiverWallet: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">Due Date</label>
+              <div className="relative">
+                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
+                <input
+                  type="date"
+                  required
+                  className="solana-input pl-12 [color-scheme:dark]"
+                  value={formData.dueDate}
+                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">Note / Memo</label>
+              <textarea
+                className="solana-input h-32 resize-none"
+                placeholder="What is this invoice for?"
+                value={formData.note}
+                onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+              />
+            </div>
+
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full btn-secondary py-5 text-base font-bold uppercase tracking-widest disabled:opacity-50"
+            >
+              {loading ? (
+                <RefreshCw size={20} className="animate-spin" />
+              ) : (
+                "Generate & Save Invoice"
+              )}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );

@@ -3,8 +3,9 @@
 @theme {
   --color-solana-purple: #9945FF;
   --color-solana-green: #14F195;
-  --color-solana-dark: #121212;
-  --color-solana-card: #1c1c1c;
+  --color-solana-dark: #0A0A0A;
+  --color-solana-card: #141414;
+  --color-solana-border: rgba(255, 255, 255, 0.08);
 }
 
 :root {
@@ -15,57 +16,163 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* Custom Utilities */
+/* Background Glow Effects */
+.bg-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.bg-glow::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 50%;
+  height: 50%;
+  background: radial-gradient(circle, rgba(153, 69, 255, 0.15) 0%, transparent 70%);
+  filter: blur(80px);
+}
+
+.bg-glow::after {
+  content: '';
+  position: absolute;
+  bottom: -10%;
+  right: -10%;
+  width: 40%;
+  height: 40%;
+  background: radial-gradient(circle, rgba(20, 241, 149, 0.1) 0%, transparent 70%);
+  filter: blur(80px);
+}
+
+/* Typography */
 .solana-gradient-text {
-  background: linear-gradient(90deg, #9945FF, #14F195);
+  background: linear-gradient(135deg, #9945FF 0%, #14F195 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
+/* Components */
 .solana-card {
-  background: var(--color-solana-card);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 1rem;
+  background: rgba(20, 20, 20, 0.6);
+  backdrop-filter: blur(12px);
+  border: 1px solid var(--color-solana-border);
+  border-radius: 1.25rem;
   padding: 1.5rem;
-  transition: all 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .solana-card:hover {
-  border-color: #9945FF;
-  box-shadow: 0 0 20px rgba(153, 69, 255, 0.1);
+  border-color: rgba(153, 69, 255, 0.4);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 30px -10px rgba(0, 0, 0, 0.5), 
+              0 0 20px rgba(153, 69, 255, 0.1);
 }
 
+/* Buttons */
 .btn-primary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  white-space: nowrap;
   background: #9945FF;
   color: white;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  transition: opacity 0.2s;
-  cursor: pointer;
-  display: inline-block;
-  text-align: center;
+  box-shadow: 0 4px 12px rgba(153, 69, 255, 0.3);
+  border: none;
 }
 
 .btn-primary:hover {
-  opacity: 0.9;
+  background: #8736e6;
+  box-shadow: 0 6px 16px rgba(153, 69, 255, 0.4);
+  transform: translateY(-1px);
 }
 
 .btn-secondary {
-  background: #14F195;
-  color: black;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
   font-weight: 600;
-  transition: opacity 0.2s;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
   cursor: pointer;
-  display: inline-block;
-  text-align: center;
+  white-space: nowrap;
+  background: #14F195;
+  color: #000000;
+  box-shadow: 0 4px 12px rgba(20, 241, 149, 0.2);
+  border: none;
 }
 
 .btn-secondary:hover {
-  opacity: 0.9;
+  background: #12d986;
+  box-shadow: 0 6px 16px rgba(20, 241, 149, 0.3);
+  transform: translateY(-1px);
+}
+
+.btn-ghost {
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  cursor: pointer;
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.05);
+  color: white;
+  border: 1px solid var(--color-solana-border);
+}
+
+.btn-ghost:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Badges */
+.badge {
+  padding: 0.25rem 0.625rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+/* Inputs */
+.solana-input {
+  width: 100%;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid var(--color-solana-border);
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: white;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.solana-input:focus {
+  border-color: #9945FF;
+  box-shadow: 0 0 0 2px rgba(153, 69, 255, 0.2);
 }
