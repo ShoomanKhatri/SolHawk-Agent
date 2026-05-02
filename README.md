@@ -37,6 +37,10 @@ SolHawk Agent is a professional AI payment recovery assistant for freelancers, i
 5. Use **Generate Reminder** to let SolHawk AI write a professional follow-up.
 6. Click **Check Payment** to verify if the transaction has landed on-chain.
 
+## Grant Materials
+
+- Colosseum Crowdedness Score screenshot: https://drive.google.com/drive/folders/1z07p3uYU4uXIPiVbAtg-zj1c0k00RNdz?usp=sharing
+
 ## Agent Automation (Vercel Cron)
 
 SolHawk Agent can run daily using Vercel Cron. This allows the agent to monitor invoices and generate recovery actions without the user opening the app.
