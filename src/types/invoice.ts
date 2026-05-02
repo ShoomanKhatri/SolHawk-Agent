@@ -10,6 +10,7 @@ export interface Invoice {
   note: string;
   solanaPayLink: string;
   aiReminder?: string;
+  userWallet: string;
   createdAt: any;
   updatedAt: any;
 }

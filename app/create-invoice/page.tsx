@@ -7,6 +7,8 @@ import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { generateSolanaPayLink } from "@/src/lib/solana";
 import { ArrowLeft, Sparkles, Wallet, Calendar, FileText, RefreshCw } from "lucide-react";
 import Link from "next/link";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useEffect } from "react";
 
 export default function CreateInvoice() {
   const router = useRouter();
@@ -20,8 +22,25 @@ export default function CreateInvoice() {
     note: "",
   });
 
+  const { publicKey, connected } = useWallet();
+
+  useEffect(() => {
+    if (connected && publicKey) {
+      setFormData((prev) => ({
+        ...prev,
+        receiverWallet: publicKey.toString(),
+      }));
+    }
+  }, [connected, publicKey]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!connected || !publicKey) {
+      alert("Please connect your wallet first.");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -38,6 +57,7 @@ export default function CreateInvoice() {
         currency: "SOL",
         status: "unpaid",
         solanaPayLink,
+        userWallet: publicKey.toString(),
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
