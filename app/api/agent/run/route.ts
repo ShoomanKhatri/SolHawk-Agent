@@ -111,7 +111,10 @@ export async function POST(_req: NextRequest) {
 
       if (status === "paid") {
         paidAt = paidAt ?? nowIso;
-        daysToPay = daysToPay ?? calculateDaysToPay(invoice.createdAt, paidAt);
+        const computedDays = calculateDaysToPay(invoice.createdAt, paidAt);
+        if (daysToPay === undefined && computedDays !== null) {
+          daysToPay = computedDays;
+        }
         paid += 1;
       } else if (isReminderAction(nextAction)) {
         aiReminder = await generatePaymentReminder(
