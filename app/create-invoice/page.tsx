@@ -5,10 +5,19 @@ import { useRouter } from "next/navigation";
 import { db } from "@/src/lib/firebase";
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { generateSolanaPayLink } from "@/src/lib/solana";
-import { ArrowLeft, Sparkles, Wallet, Calendar, FileText, RefreshCw } from "lucide-react";
+import {
+  ArrowLeft,
+  Sparkles,
+  Wallet,
+  Calendar,
+  FileText,
+  RefreshCw,
+} from "lucide-react";
 import Link from "next/link";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useEffect } from "react";
+import { Keypair } from "@solana/web3.js";
+import { evaluateAgentPolicy } from "@/src/lib/agentPolicy";
 
 export default function CreateInvoice() {
   const router = useRouter();
@@ -35,7 +44,7 @@ export default function CreateInvoice() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!connected || !publicKey) {
       alert("Please connect your wallet first.");
       return;
@@ -45,19 +54,51 @@ export default function CreateInvoice() {
 
     try {
       const amountNum = parseFloat(formData.amount);
+      const referenceKey = Keypair.generate().publicKey.toBase58();
       const solanaPayLink = generateSolanaPayLink(
         formData.receiverWallet,
         amountNum,
-        formData.note
+        formData.note,
+        referenceKey,
       );
 
-      await addDoc(collection(db, "invoices"), {
+      const policy = evaluateAgentPolicy({
         ...formData,
         amount: amountNum,
+        amountPaid: 0,
+        remainingAmount: amountNum,
         currency: "SOL",
         status: "unpaid",
         solanaPayLink,
         userWallet: publicKey.toString(),
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        reference: referenceKey,
+      });
+
+      const decisionEntry = {
+        timestamp: new Date().toISOString(),
+        status: policy.agentStatus,
+        reason: policy.reason,
+        action: policy.nextAction,
+      };
+
+      await addDoc(collection(db, "invoices"), {
+        ...formData,
+        amount: amountNum,
+        amountPaid: 0,
+        remainingAmount: amountNum,
+        currency: "SOL",
+        status: "unpaid",
+        solanaPayLink,
+        reference: referenceKey,
+        userWallet: publicKey.toString(),
+        agentStatus: policy.agentStatus,
+        nextAction: policy.nextAction,
+        lastCheckedAt: new Date().toISOString(),
+        decisionHistory: [decisionEntry],
+        reminderCount: 0,
+        reminderHistory: [],
         createdAt: serverTimestamp(),
         updatedAt: serverTimestamp(),
       });
@@ -74,10 +115,16 @@ export default function CreateInvoice() {
   return (
     <div className="relative min-h-screen">
       <div className="bg-glow" />
-      
+
       <div className="relative z-10 max-w-3xl mx-auto px-6 py-12">
-        <Link href="/dashboard" className="inline-flex items-center gap-2 text-gray-500 hover:text-white transition-colors mb-12 group">
-          <ArrowLeft size={20} className="transition-transform group-hover:-translate-x-1" />
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-2 text-gray-500 hover:text-white transition-colors mb-12 group"
+        >
+          <ArrowLeft
+            size={20}
+            className="transition-transform group-hover:-translate-x-1"
+          />
           <span className="font-medium">Back to Dashboard</span>
         </Link>
 
@@ -87,32 +134,47 @@ export default function CreateInvoice() {
               <Sparkles className="text-solana-purple" size={28} />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-white">Create New Invoice</h1>
-              <p className="text-gray-400 mt-1">Fill in the details to generate a Solana Pay link.</p>
+              <h1 className="text-3xl font-bold text-white">
+                Create New Invoice
+              </h1>
+              <p className="text-gray-400 mt-1">
+                Fill in the details to generate a Solana Pay link.
+              </p>
             </div>
           </div>
-          
+
           <form onSubmit={handleSubmit} className="space-y-8">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">Client Name</label>
+                <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">
+                  Client Name
+                </label>
                 <div className="relative">
-                  <FileText className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
+                  <FileText
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600"
+                    size={18}
+                  />
                   <input
                     type="text"
                     required
                     className="solana-input !pl-12"
                     placeholder="e.g. John Doe"
                     value={formData.clientName}
-                    onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, clientName: e.target.value })
+                    }
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">Amount (SOL)</label>
+                <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">
+                  Amount (SOL)
+                </label>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-solana-green font-bold">◎</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-solana-green font-bold">
+                    ◎
+                  </span>
                   <input
                     type="number"
                     step="0.000000001"
@@ -120,63 +182,90 @@ export default function CreateInvoice() {
                     className="solana-input !pl-10"
                     placeholder="0.00"
                     value={formData.amount}
-                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                    onChange={(e) =>
+                      setFormData({ ...formData, amount: e.target.value })
+                    }
                   />
                 </div>
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">Client Wallet Address</label>
+              <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">
+                Client Wallet Address
+              </label>
               <div className="relative">
-                <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
+                <Wallet
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600"
+                  size={18}
+                />
                 <input
                   type="text"
                   required
                   className="solana-input !pl-12 font-mono text-sm"
                   placeholder="Solana wallet address"
                   value={formData.clientWallet}
-                  onChange={(e) => setFormData({ ...formData, clientWallet: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, clientWallet: e.target.value })
+                  }
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">Receiver Wallet (Your Address)</label>
+              <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">
+                Receiver Wallet (Your Address)
+              </label>
               <div className="relative">
-                <Wallet className="absolute left-4 top-1/2 -translate-y-1/2 text-solana-purple/50" size={18} />
+                <Wallet
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-solana-purple/50"
+                  size={18}
+                />
                 <input
                   type="text"
                   required
                   className="solana-input !pl-12 font-mono text-sm border-solana-purple/20"
                   placeholder="Your Solana wallet address"
                   value={formData.receiverWallet}
-                  onChange={(e) => setFormData({ ...formData, receiverWallet: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, receiverWallet: e.target.value })
+                  }
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">Due Date</label>
+              <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">
+                Due Date
+              </label>
               <div className="relative">
-                <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600" size={18} />
+                <Calendar
+                  className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-600"
+                  size={18}
+                />
                 <input
                   type="date"
                   required
                   className="solana-input !pl-12 [color-scheme:dark]"
                   value={formData.dueDate}
-                  onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
+                  onChange={(e) =>
+                    setFormData({ ...formData, dueDate: e.target.value })
+                  }
                 />
               </div>
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">Note / Memo</label>
+              <label className="text-sm font-bold text-gray-400 uppercase tracking-wider">
+                Note / Memo
+              </label>
               <textarea
                 className="solana-input h-32 resize-none"
                 placeholder="What is this invoice for?"
                 value={formData.note}
-                onChange={(e) => setFormData({ ...formData, note: e.target.value })}
+                onChange={(e) =>
+                  setFormData({ ...formData, note: e.target.value })
+                }
               />
             </div>
 

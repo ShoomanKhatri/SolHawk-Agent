@@ -5,6 +5,7 @@ SolHawk Agent is a professional AI payment recovery assistant for freelancers, i
 ## Setup Steps
 
 1. **Install Dependencies**:
+
    ```bash
    npm install
    ```
@@ -36,9 +37,29 @@ SolHawk Agent is a professional AI payment recovery assistant for freelancers, i
 5. Use **Generate Reminder** to let SolHawk AI write a professional follow-up.
 6. Click **Check Payment** to verify if the transaction has landed on-chain.
 
+## Agent Automation (Vercel Cron)
+
+SolHawk Agent can run daily using Vercel Cron. This allows the agent to monitor invoices and generate recovery actions without the user opening the app.
+
+1. Deploy to Vercel.
+2. Add a cron schedule in `vercel.json` to hit `/api/agent/run`.
+3. The agent will evaluate invoices, check payments, and generate reminders automatically.
+
+## Demo Seed Data
+
+For hackathon demos, create four example invoices in Firestore:
+
+- **Paid invoice**: status `paid`, `amountPaid = amount`, `remainingAmount = 0`, `daysToPay = 2`
+- **Unpaid overdue invoice**: status `unpaid`, due date 3+ days ago
+- **Partial payment invoice**: status `partial`, `amountPaid` < `amount`, `remainingAmount = amount - amountPaid`
+- **Urgent overdue invoice**: status `unpaid`, due date 7+ days ago
+
+Tip: Use the Firestore console to edit these fields directly for a clean demo narrative.
+
 ## Limitations (MVP)
-- Payment detection checks recent transactions for the receiver wallet and matches the amount. It does not use reference keys for 100% precision (recommended for production).
-- Transaction history is limited to the last 10 signatures.
+
+- Payment detection uses Solana Pay references for matching, but still relies on recent transaction history for speed.
+- Transaction history is limited to the last 10 signatures for destination-based checks.
 
 ---
 
