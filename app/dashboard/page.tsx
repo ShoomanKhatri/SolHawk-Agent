@@ -106,7 +106,7 @@ export default function Dashboard() {
             <input 
               type="text" 
               placeholder="Search invoices by client or wallet..." 
-              className="solana-input pl-12 bg-white/5"
+              className="solana-input !pl-12 bg-white/5"
             />
           </div>
           <button className="btn-ghost">

@@ -81,7 +81,7 @@ export default function CreateInvoice() {
                   <input
                     type="text"
                     required
-                    className="solana-input pl-12"
+                    className="solana-input !pl-12"
                     placeholder="e.g. John Doe"
                     value={formData.clientName}
                     onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
@@ -97,7 +97,7 @@ export default function CreateInvoice() {
                     type="number"
                     step="0.000000001"
                     required
-                    className="solana-input pl-10"
+                    className="solana-input !pl-10"
                     placeholder="0.00"
                     value={formData.amount}
                     onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
@@ -113,7 +113,7 @@ export default function CreateInvoice() {
                 <input
                   type="text"
                   required
-                  className="solana-input pl-12 font-mono text-sm"
+                  className="solana-input !pl-12 font-mono text-sm"
                   placeholder="Solana wallet address"
                   value={formData.clientWallet}
                   onChange={(e) => setFormData({ ...formData, clientWallet: e.target.value })}
@@ -128,7 +128,7 @@ export default function CreateInvoice() {
                 <input
                   type="text"
                   required
-                  className="solana-input pl-12 font-mono text-sm border-solana-purple/20"
+                  className="solana-input !pl-12 font-mono text-sm border-solana-purple/20"
                   placeholder="Your Solana wallet address"
                   value={formData.receiverWallet}
                   onChange={(e) => setFormData({ ...formData, receiverWallet: e.target.value })}
@@ -143,7 +143,7 @@ export default function CreateInvoice() {
                 <input
                   type="date"
                   required
-                  className="solana-input pl-12 [color-scheme:dark]"
+                  className="solana-input !pl-12 [color-scheme:dark]"
                   value={formData.dueDate}
                   onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
                 />
