@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>SolHawk Agent Competitive Landscape</title>
+    <style>
+      body {
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        margin: 0;
+        background: #f7f8fb;
+        color: #151923;
+        line-height: 1.45;
+      }
+      main {
+        max-width: 980px;
+        margin: 0 auto;
+        padding: 40px 20px;
+      }
+      h1, h2 {
+        margin: 0 0 12px;
+      }
+      h1 {
+        font-size: 30px;
+      }
+      h2 {
+        font-size: 18px;
+        margin-top: 28px;
+      }
+      .summary {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+        margin: 20px 0;
+      }
+      .card, table {
+        background: #fff;
+        border: 1px solid #d9dee8;
+        border-radius: 8px;
+      }
+      .card {
+        padding: 16px;
+      }
+      .score {
+        font-size: 28px;
+        font-weight: 800;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        overflow: hidden;
+      }
+      th, td {
+        padding: 10px 12px;
+        border-bottom: 1px solid #e5e9f0;
+        text-align: left;
+        vertical-align: top;
+      }
+      th {
+        background: #eef2f8;
+        font-size: 13px;
+      }
+      tr:last-child td {
+        border-bottom: 0;
+      }
+      ul {
+        margin-top: 8px;
+      }
+      a {
+        color: #2557d6;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>SolHawk Agent Competitive Landscape</h1>
+      <p>Analysis date: May 3, 2026. Colosseum Copilot private search was unavailable because no PAT was configured; this is based on public web research plus local project context.</p>
+
+      <section class="summary">
+        <div class="card">
+          <div>Crowdedness</div>
+          <div class="score">6 / 10</div>
+          <div>Moderate overall; crowded in payment links, sparse in agentic recovery.</div>
+        </div>
+        <div class="card">
+          <div>Best wedge</div>
+          <div class="score">AR agent</div>
+          <div>Own payment recovery outcomes, not generic crypto checkout.</div>
+        </div>
+        <div class="card">
+          <div>Moat</div>
+          <div class="score">Data</div>
+          <div>Reminder effectiveness, client payment behavior, and verified on-chain outcomes.</div>
+        </div>
+      </section>
+
+      <h2>Relevant Competitors and Substitutes</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Type</th>
+            <th>Overlap</th>
+            <th>Threat</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>MoonPay Commerce / Helio</td>
+            <td>Solana-capable crypto checkout</td>
+            <td>Pay links, subscriptions, checkout, merchant tooling</td>
+            <td>High for checkout, low for freelancer recovery agent</td>
+          </tr>
+          <tr>
+            <td>Request Finance</td>
+            <td>Crypto finance and invoicing</td>
+            <td>Invoices, Solana payments, AP/AR workflows</td>
+            <td>High for crypto invoicing, medium for freelancer recovery</td>
+          </tr>
+          <tr>
+            <td>Coinflow</td>
+            <td>Payment infrastructure</td>
+            <td>Checkout links, card/ACH/crypto, USDC settlement, webhooks</td>
+            <td>Medium; infra-heavy, not recovery-focused</td>
+          </tr>
+          <tr>
+            <td>BadRoc / Solswish</td>
+            <td>Solana payment links and invoices</td>
+            <td>Payment links, invoices, tip jars, analytics</td>
+            <td>Medium; similar payment UX, weaker agentic collection</td>
+          </tr>
+          <tr>
+            <td>Quidhive</td>
+            <td>Freelancer payment links with escrow</td>
+            <td>Freelancers, card/crypto payment links, on-chain escrow</td>
+            <td>Medium-high; strong freelancer positioning</td>
+          </tr>
+          <tr>
+            <td>SolPay</td>
+            <td>Solana payment requests</td>
+            <td>Payment requests, tracking, invoicing, receipts</td>
+            <td>Medium; same rail, less collection automation</td>
+          </tr>
+          <tr>
+            <td>Quorii / Lance</td>
+            <td>Non-crypto AI collections</td>
+            <td>AI invoice chasing, escalation, payment recovery</td>
+            <td>High product threat; lacks Solana-native settlement</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h2>Conclusion</h2>
+      <p>The Solana payment-link and invoice layer is crowded enough that SolHawk should avoid pitching itself as another way to create payment links. The open space is a specialized recovery agent for freelancers and small teams: on-chain payment verification, partial-payment state, reminder policy, and measurable recovery outcomes.</p>
+
+      <h2>Differentiation</h2>
+      <ul>
+        <li>Use USDC-first invoices with SOL as secondary, so freelancers avoid volatility.</li>
+        <li>Make payment recovery the core metric: days-to-pay, recovery rate, reminders-to-paid, partial-balance conversion.</li>
+        <li>Add multi-channel collection actions: email, Telegram, SMS, WhatsApp, with auto-stop on verified payment.</li>
+        <li>Build a client payment memory layer that learns tone, timing, and channel effectiveness.</li>
+        <li>Add public audit trails: reference, transaction signature, reminder log, and receipt export.</li>
+      </ul>
+
+      <h2>Sources</h2>
+      <ul>
+        <li><a href="https://launch.solana.com/docs/solana-pay">Solana Pay docs</a></li>
+        <li><a href="https://www.hel.io/">MoonPay Commerce / Helio</a></li>
+        <li><a href="https://www.request.finance/post/solana-payments-now-supported-in-request-finance">Request Finance Solana support</a></li>
+        <li><a href="https://docs.coinflow.cash/">Coinflow docs</a></li>
+        <li><a href="https://www.solswish.xyz/">BadRoc / Solswish</a></li>
+        <li><a href="https://quidhive.com/">Quidhive</a></li>
+        <li><a href="https://www.solpay.tech/">SolPay</a></li>
+        <li><a href="https://quorii.com/">Quorii</a></li>
+        <li><a href="https://lanceos.ai/">Lance</a></li>
+        <li><a href="https://docs.colosseum.com/copilot/examples/b2b-stablecoin-payments">Colosseum Copilot public B2B stablecoin example</a></li>
+      </ul>
+    </main>
+  </body>
+</html>
