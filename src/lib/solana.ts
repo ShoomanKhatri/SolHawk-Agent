@@ -33,11 +33,14 @@ export async function checkSolanaPayment(
 ) {
   try {
     if (reference) {
-      return checkSolanaPaymentByReference(
+      const referenceResult = await checkSolanaPaymentByReference(
         receiverWallet,
         expectedAmount,
         reference,
       );
+      if (referenceResult.found) {
+        return referenceResult;
+      }
     }
 
     return checkSolanaPaymentByDestination(receiverWallet, expectedAmount);

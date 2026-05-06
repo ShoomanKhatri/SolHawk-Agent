@@ -71,8 +71,8 @@ export async function POST(req: NextRequest) {
         : null;
 
       const updateMask = isPartial
-        ? "status&updateMask.fieldPaths=updatedAt&updateMask.fieldPaths=agentStatus&updateMask.fieldPaths=nextAction&updateMask.fieldPaths=lastCheckedAt&updateMask.fieldPaths=amountPaid&updateMask.fieldPaths=remainingAmount"
-        : "status&updateMask.fieldPaths=updatedAt&updateMask.fieldPaths=agentStatus&updateMask.fieldPaths=nextAction&updateMask.fieldPaths=lastCheckedAt&updateMask.fieldPaths=paidAt&updateMask.fieldPaths=daysToPay&updateMask.fieldPaths=amountPaid&updateMask.fieldPaths=remainingAmount";
+        ? "updateMask.fieldPaths=status&updateMask.fieldPaths=updatedAt&updateMask.fieldPaths=agentStatus&updateMask.fieldPaths=nextAction&updateMask.fieldPaths=lastCheckedAt&updateMask.fieldPaths=amountPaid&updateMask.fieldPaths=remainingAmount"
+        : "updateMask.fieldPaths=status&updateMask.fieldPaths=updatedAt&updateMask.fieldPaths=agentStatus&updateMask.fieldPaths=nextAction&updateMask.fieldPaths=lastCheckedAt&updateMask.fieldPaths=paidAt&updateMask.fieldPaths=daysToPay&updateMask.fieldPaths=amountPaid&updateMask.fieldPaths=remainingAmount";
 
       const fields: Record<string, FirestoreValue> = {
         status: { stringValue: isPartial ? "partial" : "paid" },
@@ -95,16 +95,13 @@ export async function POST(req: NextRequest) {
       }
 
       console.log("Updating payment status via REST API...");
-      const patchRes = await fetch(
-        `${baseUrl}?updateMask.fieldPaths=${updateMask}&key=${apiKey}`,
-        {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            fields,
-          }),
-        },
-      );
+      const patchRes = await fetch(`${baseUrl}?${updateMask}&key=${apiKey}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          fields,
+        }),
+      });
 
       if (!patchRes.ok) {
         throw new Error(`Failed to update status: ${patchRes.statusText}`);
