@@ -1,5 +1,8 @@
 import { Connection, PublicKey, clusterApiUrl } from "@solana/web3.js";
 
+type AccountKeyWithPubkey = { pubkey: PublicKey };
+type AccountKeyLike = string | PublicKey | AccountKeyWithPubkey;
+
 /**
  * Generates a Solana Pay URL.
  * Format: solana:<receiverWallet>?amount=<amount>&label=<label>&message=<message>
@@ -66,11 +69,14 @@ async function checkSolanaPaymentByReference(
 
     if (!tx) continue;
 
-    const accountKeys = tx.transaction.message.accountKeys;
-    const referenceFound = accountKeys.some((key: any) => {
+    const accountKeys = tx.transaction.message.accountKeys as AccountKeyLike[];
+    const referenceFound = accountKeys.some((key) => {
       if (typeof key === "string") return key === reference;
-      if ("pubkey" in key) return key.pubkey.toBase58() === reference;
-      return key.toBase58() === reference;
+      if (key instanceof PublicKey) return key.toBase58() === reference;
+      if (typeof key === "object" && "pubkey" in key) {
+        return (key as AccountKeyWithPubkey).pubkey.toBase58() === reference;
+      }
+      return false;
     });
 
     if (!referenceFound) continue;

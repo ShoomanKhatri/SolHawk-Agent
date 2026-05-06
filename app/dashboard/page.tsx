@@ -36,12 +36,32 @@ export default function Dashboard() {
 
   const { publicKey, connected } = useWallet();
 
+  const getCreatedAtSeconds = (value: Invoice["createdAt"]) => {
+    if (!value) return 0;
+    if (typeof value === "string" || typeof value === "number") {
+      const date = new Date(value);
+      return Number.isNaN(date.getTime())
+        ? 0
+        : Math.floor(date.getTime() / 1000);
+    }
+    if (
+      typeof value === "object" &&
+      "seconds" in value &&
+      typeof value.seconds === "number"
+    ) {
+      return value.seconds;
+    }
+    return 0;
+  };
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
   useEffect(() => {
     if (!connected || !publicKey) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInvoices([]);
       setLoading(false);
       return;
@@ -62,8 +82,8 @@ export default function Dashboard() {
         })) as Invoice[];
 
         docs.sort((a, b) => {
-          const dateA = a.createdAt?.seconds || 0;
-          const dateB = b.createdAt?.seconds || 0;
+          const dateA = getCreatedAtSeconds(a.createdAt);
+          const dateB = getCreatedAtSeconds(b.createdAt);
           return dateB - dateA;
         });
 

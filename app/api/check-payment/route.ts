@@ -12,6 +12,11 @@ type FirestoreValue =
   | { mapValue: { fields: Record<string, FirestoreValue> } }
   | { arrayValue: { values?: FirestoreValue[] } };
 
+type FirestoreDocument = {
+  name: string;
+  fields?: Record<string, FirestoreValue>;
+};
+
 export async function POST(req: NextRequest) {
   try {
     const { invoiceId } = await req.json();
@@ -38,9 +43,11 @@ export async function POST(req: NextRequest) {
       throw new Error(`Failed to fetch invoice: ${getRes.statusText}`);
     }
 
-    const docData = await getRes.json();
+    const docData = (await getRes.json()) as FirestoreDocument;
 
-    const invoiceData = firestoreFieldsToJs(docData.fields || {}) as Invoice;
+    const invoiceData = firestoreFieldsToJs(
+      docData.fields || {},
+    ) as unknown as Invoice;
 
     console.log("Invoice data fetched successfully");
 
@@ -67,7 +74,7 @@ export async function POST(req: NextRequest) {
         ? "status&updateMask.fieldPaths=updatedAt&updateMask.fieldPaths=agentStatus&updateMask.fieldPaths=nextAction&updateMask.fieldPaths=lastCheckedAt&updateMask.fieldPaths=amountPaid&updateMask.fieldPaths=remainingAmount"
         : "status&updateMask.fieldPaths=updatedAt&updateMask.fieldPaths=agentStatus&updateMask.fieldPaths=nextAction&updateMask.fieldPaths=lastCheckedAt&updateMask.fieldPaths=paidAt&updateMask.fieldPaths=daysToPay&updateMask.fieldPaths=amountPaid&updateMask.fieldPaths=remainingAmount";
 
-      const fields: Record<string, any> = {
+      const fields: Record<string, FirestoreValue> = {
         status: { stringValue: isPartial ? "partial" : "paid" },
         agentStatus: { stringValue: isPartial ? "partial" : "paid" },
         nextAction: {
@@ -119,21 +126,22 @@ export async function POST(req: NextRequest) {
       confidence: paymentResult.confidence,
       reason: paymentResult.reason,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error in check-payment:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 function firestoreFieldsToJs(fields: Record<string, FirestoreValue>) {
-  const result: Record<string, any> = {};
+  const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(fields)) {
     result[key] = firestoreValueToJs(value);
   }
   return result;
 }
 
-function firestoreValueToJs(value: FirestoreValue): any {
+function firestoreValueToJs(value: FirestoreValue): unknown {
   if ("stringValue" in value) return value.stringValue;
   if ("integerValue" in value) return Number(value.integerValue);
   if ("doubleValue" in value) return value.doubleValue;
@@ -149,7 +157,7 @@ function firestoreValueToJs(value: FirestoreValue): any {
   return null;
 }
 
-function calculateDaysToPay(createdAt: any, paidAt: string) {
+function calculateDaysToPay(createdAt: unknown, paidAt: string) {
   const createdDate = parseInvoiceDate(createdAt);
   if (!createdDate) return null;
   const paidDate = new Date(paidAt);
@@ -157,7 +165,7 @@ function calculateDaysToPay(createdAt: any, paidAt: string) {
   return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
 }
 
-function parseInvoiceDate(value: any) {
+function parseInvoiceDate(value: unknown) {
   if (!value) return null;
   if (typeof value === "string") {
     const date = new Date(value);
@@ -167,8 +175,14 @@ function parseInvoiceDate(value: any) {
     const date = new Date(value);
     return isNaN(date.getTime()) ? null : date;
   }
-  if (typeof value === "object" && "seconds" in value) {
-    const date = new Date(value.seconds * 1000);
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "seconds" in value &&
+    typeof (value as { seconds?: unknown }).seconds === "number"
+  ) {
+    const seconds = (value as { seconds: number }).seconds;
+    const date = new Date(seconds * 1000);
     return isNaN(date.getTime()) ? null : date;
   }
   return null;

@@ -81,8 +81,9 @@ export async function generatePaymentReminder(
 
     console.log("Reminder generated successfully");
     return text;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Gemini API Error details:", error);
-    throw new Error(`AI generation failed: ${error.message}`);
+    const message = error instanceof Error ? error.message : "Unknown error";
+    throw new Error(`AI generation failed: ${message}`);
   }
 }

@@ -9,6 +9,12 @@ export interface AnalysisResult {
   confidence: number;
 }
 
+type TransactionLike = {
+  destination: string;
+  amount: number;
+  timestamp: string | number | Date;
+};
+
 /**
  * Analyzes an invoice to determine its current state and recommended actions.
  */
@@ -66,7 +72,10 @@ export function analyzeInvoice(invoice: Invoice): AnalysisResult {
  * Verifies a payment against an invoice and a list of transactions.
  * Matches receiver wallet, approximate amount, and time window.
  */
-export function verifyPayment(invoice: Invoice, transactions: any[]) {
+export function verifyPayment(
+  invoice: Invoice,
+  transactions: TransactionLike[],
+) {
   const windowStart = new Date();
   windowStart.setHours(windowStart.getHours() - 24); // Last 24 hours
 

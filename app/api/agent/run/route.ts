@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { evaluateAgentPolicy } from "@/src/lib/agentPolicy";
 import { checkSolanaPayment } from "@/src/lib/solana";
 import { generatePaymentReminder } from "@/src/lib/gemini";
@@ -14,7 +14,16 @@ type FirestoreValue =
   | { mapValue: { fields: Record<string, FirestoreValue> } }
   | { arrayValue: { values?: FirestoreValue[] } };
 
-export async function POST(_req: NextRequest) {
+type FirestoreDocument = {
+  name: string;
+  fields?: Record<string, FirestoreValue>;
+};
+
+type FirestoreRunQueryRow = {
+  document?: FirestoreDocument;
+};
+
+export async function POST() {
   // Scheduled agent runner: configure a cron (e.g. Vercel) to call this endpoint daily.
   try {
     const projectId = process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID;
@@ -102,8 +111,8 @@ export async function POST(_req: NextRequest) {
         action: policy.nextAction,
       });
 
-      let agentStatus = policy.agentStatus;
-      let nextAction = policy.nextAction;
+      const agentStatus = policy.agentStatus;
+      const nextAction = policy.nextAction;
       let aiReminder = invoice.aiReminder;
       let reminderEntry: ReminderEntry | null = null;
       let paidAt = invoice.paidAt;
@@ -151,7 +160,7 @@ export async function POST(_req: NextRequest) {
         : invoice.firstReminderAt;
       const lastReminderAt = reminderEntry ? nowIso : invoice.lastReminderAt;
 
-      const updatePayload: Record<string, any> = {
+      const updatePayload: Record<string, unknown> = {
         agentStatus,
         nextAction,
         lastCheckedAt: nowIso,
@@ -193,9 +202,10 @@ export async function POST(_req: NextRequest) {
       reminders,
       paid,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Agent runner error:", error);
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const message = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
@@ -224,7 +234,7 @@ function getLastReminderTone(history?: ReminderEntry[]) {
   return history[history.length - 1]?.tone ?? null;
 }
 
-function calculateDaysToPay(createdAt: any, paidAt: string) {
+function calculateDaysToPay(createdAt: unknown, paidAt: string) {
   const createdDate = parseInvoiceDate(createdAt);
   if (!createdDate) return null;
   const paidDate = new Date(paidAt);
@@ -232,7 +242,7 @@ function calculateDaysToPay(createdAt: any, paidAt: string) {
   return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
 }
 
-function parseInvoiceDate(value: any) {
+function parseInvoiceDate(value: unknown) {
   if (!value) return null;
   if (typeof value === "string") {
     const date = new Date(value);
@@ -242,8 +252,14 @@ function parseInvoiceDate(value: any) {
     const date = new Date(value);
     return isNaN(date.getTime()) ? null : date;
   }
-  if (typeof value === "object" && "seconds" in value) {
-    const date = new Date(value.seconds * 1000);
+  if (
+    typeof value === "object" &&
+    value !== null &&
+    "seconds" in value &&
+    typeof (value as { seconds?: unknown }).seconds === "number"
+  ) {
+    const seconds = (value as { seconds: number }).seconds;
+    const date = new Date(seconds * 1000);
     return isNaN(date.getTime()) ? null : date;
   }
   return null;
@@ -277,29 +293,30 @@ async function fetchInvoicesByStatus(
   }
 
   const data = await res.json();
-  const docs = data
-    .map((row: any) => row.document)
-    .filter(Boolean)
-    .map((doc: any) => firestoreDocToInvoice(doc));
+  const rows = Array.isArray(data) ? (data as FirestoreRunQueryRow[]) : [];
+  const docs = rows
+    .map((row) => row.document)
+    .filter((doc): doc is FirestoreDocument => Boolean(doc))
+    .map((doc) => firestoreDocToInvoice(doc));
 
   return docs;
 }
 
-function firestoreDocToInvoice(doc: any): Invoice {
+function firestoreDocToInvoice(doc: FirestoreDocument): Invoice {
   const fields = firestoreFieldsToJs(doc.fields || {});
   const id = doc.name.split("/").pop();
   return { id, ...fields } as Invoice;
 }
 
 function firestoreFieldsToJs(fields: Record<string, FirestoreValue>) {
-  const result: Record<string, any> = {};
+  const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(fields)) {
     result[key] = firestoreValueToJs(value);
   }
   return result;
 }
 
-function firestoreValueToJs(value: FirestoreValue): any {
+function firestoreValueToJs(value: FirestoreValue): unknown {
   if ("stringValue" in value) return value.stringValue;
   if ("integerValue" in value) return Number(value.integerValue);
   if ("doubleValue" in value) return value.doubleValue;
@@ -327,7 +344,7 @@ async function patchInvoice(
   baseUrl: string,
   apiKey: string,
   invoiceId: string,
-  update: Record<string, any>,
+  update: Record<string, unknown>,
 ) {
   const updateMask = Object.keys(update)
     .map((field) => `updateMask.fieldPaths=${encodeURIComponent(field)}`)
@@ -347,7 +364,7 @@ async function patchInvoice(
   }
 }
 
-function toFirestoreFields(update: Record<string, any>) {
+function toFirestoreFields(update: Record<string, unknown>) {
   const fields: Record<string, FirestoreValue> = {};
   for (const [key, value] of Object.entries(update)) {
     fields[key] = toFirestoreValue(value);
@@ -355,7 +372,7 @@ function toFirestoreFields(update: Record<string, any>) {
   return fields;
 }
 
-function toFirestoreValue(value: any): FirestoreValue {
+function toFirestoreValue(value: unknown): FirestoreValue {
   if (value === null || value === undefined) return { nullValue: null };
   if (Array.isArray(value)) {
     return {
@@ -367,7 +384,7 @@ function toFirestoreValue(value: any): FirestoreValue {
   if (typeof value === "object") {
     return {
       mapValue: {
-        fields: toFirestoreFields(value as Record<string, any>),
+        fields: toFirestoreFields(value as Record<string, unknown>),
       },
     };
   }

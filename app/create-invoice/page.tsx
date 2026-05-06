@@ -35,6 +35,7 @@ export default function CreateInvoice() {
 
   useEffect(() => {
     if (connected && publicKey) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData((prev) => ({
         ...prev,
         receiverWallet: publicKey.toString(),

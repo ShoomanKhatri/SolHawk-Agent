@@ -1,3 +1,8 @@
+export type FirestoreTimestamp = {
+  seconds: number;
+  nanoseconds?: number;
+};
+
 export interface Invoice {
   id?: string;
   clientName: string;
@@ -24,8 +29,8 @@ export interface Invoice {
   daysToPay?: number;
   reminderHistory?: ReminderEntry[];
   userWallet: string;
-  createdAt: any;
-  updatedAt: any;
+  createdAt: FirestoreTimestamp | string | number | null;
+  updatedAt: FirestoreTimestamp | string | number | null;
 }
 
 export interface DecisionEntry {

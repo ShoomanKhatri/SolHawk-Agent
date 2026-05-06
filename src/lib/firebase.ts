@@ -1,5 +1,9 @@
 import { initializeApp, getApps, getApp } from "firebase/app";
-import { getFirestore, initializeFirestore, Firestore } from "firebase/firestore";
+import {
+  getFirestore,
+  initializeFirestore,
+  Firestore,
+} from "firebase/firestore";
 
 const firebaseConfig = {
   apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -18,7 +22,7 @@ try {
   db = initializeFirestore(app, {
     experimentalForceLongPolling: true,
   });
-} catch (e) {
+} catch {
   // If already initialized, get the existing instance
   db = getFirestore(app);
 }

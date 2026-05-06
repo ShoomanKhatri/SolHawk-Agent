@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { db } from "@/src/lib/firebase";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
@@ -35,7 +35,29 @@ export default function InvoiceDetail() {
   const [autoMode, setAutoMode] = useState(false);
   const [mounted, setMounted] = useState(false);
 
+  const generateReminder = useCallback(async () => {
+    setProcessing(true);
+    try {
+      const res = await fetch("/api/generate-reminder", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ invoiceId: id }),
+      });
+      const data = await res.json();
+      if (data.reminder) {
+        alert("Reminder generated!");
+        setInvoice((prev) =>
+          prev ? { ...prev, aiReminder: data.reminder } : null,
+        );
+      }
+    } catch (error) {
+      console.error(error);
+    }
+    setProcessing(false);
+  }, [id]);
+
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMounted(true);
   }, []);
 
@@ -67,7 +89,7 @@ export default function InvoiceDetail() {
       setLoading(false);
     };
     fetchInvoice();
-  }, [id, autoMode]);
+  }, [id, autoMode, generateReminder]);
 
   const checkPayment = async () => {
     setProcessing(true);
@@ -83,27 +105,6 @@ export default function InvoiceDetail() {
         router.refresh();
       } else {
         alert(data.message || "No payment detected yet.");
-      }
-    } catch (error) {
-      console.error(error);
-    }
-    setProcessing(false);
-  };
-
-  const generateReminder = async () => {
-    setProcessing(true);
-    try {
-      const res = await fetch("/api/generate-reminder", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ invoiceId: id }),
-      });
-      const data = await res.json();
-      if (data.reminder) {
-        alert("Reminder generated!");
-        setInvoice((prev) =>
-          prev ? { ...prev, aiReminder: data.reminder } : null,
-        );
       }
     } catch (error) {
       console.error(error);

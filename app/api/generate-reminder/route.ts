@@ -13,6 +13,16 @@ type FirestoreValue =
   | { mapValue: { fields: Record<string, FirestoreValue> } }
   | { arrayValue: { values?: FirestoreValue[] } };
 
+type FirestoreDocument = {
+  name: string;
+  fields?: Record<string, FirestoreValue>;
+};
+
+type FirestoreMapInput =
+  | DecisionEntry
+  | ReminderEntry
+  | Record<string, unknown>;
+
 export async function POST(req: NextRequest) {
   try {
     const { invoiceId } = await req.json();
@@ -39,9 +49,11 @@ export async function POST(req: NextRequest) {
       throw new Error(`Failed to fetch invoice: ${getRes.statusText}`);
     }
 
-    const docData = await getRes.json();
+    const docData = (await getRes.json()) as FirestoreDocument;
 
-    const invoiceData = firestoreFieldsToJs(docData.fields || {}) as Invoice;
+    const invoiceData = firestoreFieldsToJs(
+      docData.fields || {},
+    ) as unknown as Invoice;
 
     console.log("Invoice data fetched successfully");
 
@@ -118,11 +130,12 @@ export async function POST(req: NextRequest) {
     console.log("Invoice updated successfully");
 
     return NextResponse.json({ reminder });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("DETAILED ERROR in generate-reminder:", error);
+    const message = error instanceof Error ? error.message : "Unknown error";
     return NextResponse.json(
       {
-        error: error.message,
+        error: message,
       },
       { status: 500 },
     );
@@ -162,14 +175,14 @@ function toneToAction(tone: ReminderEntry["tone"]) {
 }
 
 function firestoreFieldsToJs(fields: Record<string, FirestoreValue>) {
-  const result: Record<string, any> = {};
+  const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(fields)) {
     result[key] = firestoreValueToJs(value);
   }
   return result;
 }
 
-function firestoreValueToJs(value: FirestoreValue): any {
+function firestoreValueToJs(value: FirestoreValue): unknown {
   if ("stringValue" in value) return value.stringValue;
   if ("integerValue" in value) return Number(value.integerValue);
   if ("doubleValue" in value) return value.doubleValue;
@@ -185,23 +198,23 @@ function firestoreValueToJs(value: FirestoreValue): any {
   return null;
 }
 
-function toFirestoreArray(values: any[]) {
+function toFirestoreArray(values: FirestoreMapInput[]) {
   return values.map((entry) => ({
     mapValue: {
-      fields: toFirestoreFields(entry),
+      fields: toFirestoreFields(entry as Record<string, unknown>),
     },
   }));
 }
 
-function toFirestoreFields(value: Record<string, any>) {
-  const fields: Record<string, any> = {};
+function toFirestoreFields(value: Record<string, unknown>) {
+  const fields: Record<string, FirestoreValue> = {};
   for (const [key, fieldValue] of Object.entries(value)) {
     fields[key] = toFirestoreValue(fieldValue);
   }
   return fields;
 }
 
-function toFirestoreValue(value: any): any {
+function toFirestoreValue(value: unknown): FirestoreValue {
   if (value === null || value === undefined) return { nullValue: null };
   if (Array.isArray(value)) {
     return {
@@ -209,7 +222,11 @@ function toFirestoreValue(value: any): any {
     };
   }
   if (typeof value === "object") {
-    return { mapValue: { fields: toFirestoreFields(value) } };
+    return {
+      mapValue: {
+        fields: toFirestoreFields(value as Record<string, unknown>),
+      },
+    };
   }
   if (typeof value === "number") {
     return Number.isInteger(value)
